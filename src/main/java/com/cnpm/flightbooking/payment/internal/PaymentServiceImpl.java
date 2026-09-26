@@ -23,6 +23,7 @@ class PaymentServiceImpl implements PaymentFacade {
     private final PricingStrategyFactory strategyFactory;
 
     @Override
+    @Transactional
     public PaymentResultResponse processPayment(PaymentRequest request) {
         if (request == null
                 || request.bookingId() == null
