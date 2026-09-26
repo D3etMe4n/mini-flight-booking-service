@@ -1,4 +1,4 @@
-package com.app.flight.internal;
+package com.cnpm.flightbooking.flight.internal;
 
 import jakarta.persistence.*;
 import lombok.Getter;
