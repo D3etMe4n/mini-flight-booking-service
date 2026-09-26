@@ -1,8 +1,19 @@
 package com.cnpm.flightbooking.common.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 @Configuration
-class RedisConfig {
+public class RedisConfig {
 
+    @Bean
+    public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory connectionFactory) {
+        StringRedisTemplate template = new StringRedisTemplate();
+        template.setConnectionFactory(connectionFactory);
+
+        template.afterPropertiesSet();
+        return template;
+    }
 }

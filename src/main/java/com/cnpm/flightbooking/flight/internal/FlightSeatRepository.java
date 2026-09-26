@@ -1,4 +1,10 @@
 package com.cnpm.flightbooking.flight.internal;
 
-interface FlightSeatRepository extends org.springframework.data.jpa.repository.JpaRepository<com.cnpm.flightbooking.flight.internal.FlightSeat, java.lang.Long> {
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+interface FlightSeatRepository extends JpaRepository<FlightSeat, Long> {
+     Optional<FlightSeat> findByFlightIdAndSeatNumber(Long flightId, String seatNumber);
+
 }

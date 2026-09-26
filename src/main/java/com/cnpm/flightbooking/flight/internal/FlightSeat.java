@@ -1,9 +1,7 @@
 package com.cnpm.flightbooking.flight.internal;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "flight_seats", uniqueConstraints = {
@@ -11,6 +9,8 @@ import lombok.Setter;
 })
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 public class FlightSeat {
 
@@ -28,6 +28,7 @@ public class FlightSeat {
     @Column(nullable = false, length = 20)
     private SeatClass seatClass; // ECONOMY, BUSINESS
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean isReserved = false;
 }
