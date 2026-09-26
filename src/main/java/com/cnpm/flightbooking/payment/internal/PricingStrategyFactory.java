@@ -24,6 +24,6 @@ public class PricingStrategyFactory {
 
     public PaymentStrategy getStrategy(CustomerType type) {
         return Optional.ofNullable(strategyMap.get(type))
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chiến lược giá cho loại khách hàng: " + type));
+                .orElseThrow(() -> new IllegalArgumentException("Payment strategy not found for customer type: " + type));
     }
 }
