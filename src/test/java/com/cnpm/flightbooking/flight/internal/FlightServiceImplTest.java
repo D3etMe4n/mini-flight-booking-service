@@ -42,7 +42,7 @@ class FlightServiceImplTest {
     private ValueOperations<String, String> valueOperations;
 
     @InjectMocks
-    private FlightServiceImpl flightService;
+    private FlightFacadeImpl flightService;
 
     private Flight sampleFlight;
     private FlightSeat sampleSeat;

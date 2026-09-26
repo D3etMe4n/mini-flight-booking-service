@@ -15,7 +15,7 @@ import java.util.UUID;
 @Service
 @AllArgsConstructor
 @Transactional(readOnly = true)
-class PaymentServiceImpl implements PaymentFacade {
+class PaymentFacadeImpl implements PaymentFacade {
 
     private static final BigDecimal PAYMENT_LIMIT = new BigDecimal("100000000");
 

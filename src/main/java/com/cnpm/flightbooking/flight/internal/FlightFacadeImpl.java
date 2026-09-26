@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 @Transactional(readOnly = true)
 @AllArgsConstructor
 @Service
-class FlightServiceImpl implements FlightFacade {
+class FlightFacadeImpl implements FlightFacade {
 
     private static final Predicate<String> SEAT_ID_PREDICATE = Pattern.compile("^[0-9]{1,2}[A-F]$").asMatchPredicate();
     private static final Duration LOCK_TIMEOUT = Duration.ofMinutes(10);

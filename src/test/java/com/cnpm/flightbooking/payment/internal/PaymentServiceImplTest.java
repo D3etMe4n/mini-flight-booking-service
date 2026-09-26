@@ -20,8 +20,6 @@ import java.math.BigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -38,7 +36,7 @@ class PaymentServiceImplTest {
     private PaymentStrategy paymentStrategy;
 
     @InjectMocks
-    private PaymentServiceImpl paymentService;
+    private PaymentFacadeImpl paymentService;
 
     @Nested
     @DisplayName("processPayment() - Input Validation")
