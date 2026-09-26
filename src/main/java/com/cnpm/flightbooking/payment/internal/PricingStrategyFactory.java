@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+
+// Oh Factory Pattern muhahahaha
 @Component
 public class PricingStrategyFactory {
 

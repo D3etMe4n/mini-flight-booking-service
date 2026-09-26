@@ -1,9 +1,8 @@
 package com.cnpm.flightbooking.payment.internal;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -11,6 +10,8 @@ import java.time.LocalDateTime;
 @Table(name = "payment_transactions")
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 public class PaymentTransaction {
 
