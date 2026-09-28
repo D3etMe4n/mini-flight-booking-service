@@ -23,6 +23,7 @@ extra["springModulithVersion"] = "2.1.1"
 
 dependencies {
                 implementation("org.springframework.boot:spring-boot-starter-web")
+                implementation("org.springframework.boot:spring-boot-starter-webmvc")
                 implementation("org.springframework.boot:spring-boot-starter-data-jpa")
                 implementation("org.springframework.boot:spring-boot-starter-data-redis")
                 implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -33,6 +34,7 @@ dependencies {
                 runtimeOnly("org.postgresql:postgresql")
                 annotationProcessor("org.projectlombok:lombok")
                 testImplementation("org.springframework.boot:spring-boot-starter-test")
+                testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
                 testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
                 testImplementation("org.springframework.boot:spring-boot-starter-data-redis-test")
                 testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
