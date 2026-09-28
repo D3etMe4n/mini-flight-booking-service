@@ -1,5 +1,6 @@
 package com.cnpm.flightbooking.payment.internal;
 
+import com.cnpm.flightbooking.payment.CustomerType;
 import com.cnpm.flightbooking.payment.PaymentFacade;
 import com.cnpm.flightbooking.payment.dto.PaymentQuoteResponse;
 import com.cnpm.flightbooking.payment.dto.PaymentRequest;

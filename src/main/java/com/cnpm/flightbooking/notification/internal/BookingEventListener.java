@@ -1,5 +1,6 @@
 package com.cnpm.flightbooking.notification.internal;
 
+import com.cnpm.flightbooking.notification.event.BookingCancelledEvent;
 import com.cnpm.flightbooking.notification.event.BookingSuccessEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +32,7 @@ public class BookingEventListener {
 
         try {
             // 1. Mock email dispatch via SMTP/third-party mail service
-            sendEmailMock(event);
+            sendEmailMock(event.customerEmail());
 
             // 2. Persist audit record with SENT status
             saveNotificationLog(
@@ -60,9 +61,49 @@ public class BookingEventListener {
         }
     }
 
-    private void sendEmailMock(BookingSuccessEvent event) {
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleBookingCancelled(BookingCancelledEvent event) {
+        log.info("Received BookingCancelledEvent for booking ID: {}", event.bookingId());
+
+        String title = "Booking Cancellation Notice - " + event.bookingCode();
+        String content = String.format(
+                "Dear Customer, your booking %s (Seat %s) has been cancelled. Refund amount: %s VND. Reason: %s",
+                event.bookingCode(),
+                event.seatNumber(),
+                event.refundedAmount(),
+                event.reason()
+        );
+
+        try {
+            sendEmailMock(event.customerEmail());
+
+            saveNotificationLog(
+                    event.bookingId(),
+                    event.customerEmail(),
+                    NotificationChannel.EMAIL,
+                    title,
+                    content,
+                    NotificationStatus.SENT,
+                    null
+            );
+        } catch (Exception ex) {
+            log.error("Failed to send cancellation email to {}: {}", event.customerEmail(), ex.getMessage());
+            saveNotificationLog(
+                    event.bookingId(),
+                    event.customerEmail(),
+                    NotificationChannel.EMAIL,
+                    title,
+                    content,
+                    NotificationStatus.FAILED,
+                    ex.getMessage()
+            );
+        }
+    }
+
+    private void sendEmailMock(String customerEmail) {
         // Validate recipient address before attempting dispatch
-        if (event.customerEmail() == null || event.customerEmail().isBlank()) {
+        if (customerEmail == null || customerEmail.isBlank()) {
             throw new IllegalArgumentException("Customer email address is empty");
         }
         // Simulated network I/O latency for external mail server

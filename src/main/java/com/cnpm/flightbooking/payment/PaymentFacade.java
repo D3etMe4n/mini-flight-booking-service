@@ -3,7 +3,6 @@ package com.cnpm.flightbooking.payment;
 import com.cnpm.flightbooking.payment.dto.PaymentQuoteResponse;
 import com.cnpm.flightbooking.payment.dto.PaymentRequest;
 import com.cnpm.flightbooking.payment.dto.PaymentResultResponse;
-import com.cnpm.flightbooking.payment.internal.CustomerType;
 
 import java.math.BigDecimal;
 

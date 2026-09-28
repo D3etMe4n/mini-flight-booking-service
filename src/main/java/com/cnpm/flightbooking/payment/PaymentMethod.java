@@ -1,4 +1,4 @@
-package com.cnpm.flightbooking.payment.internal;
+package com.cnpm.flightbooking.payment;
 
 public enum PaymentMethod {
     VNPAY,

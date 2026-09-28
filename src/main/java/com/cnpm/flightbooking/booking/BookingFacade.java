@@ -1,14 +1,15 @@
 package com.cnpm.flightbooking.booking;
 
-import com.cnpm.flightbooking.booking.internal.Booking;
-import com.cnpm.flightbooking.booking.dto.BookingRequest;
+import com.cnpm.flightbooking.booking.dto.*;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 public interface BookingFacade {
-    Booking initiateBooking(BookingRequest request);
+    BookingResponse bookFlight(BookingRequest request);
 
-    void confirmBooking(Long bookingId, BigDecimal finalAmount);
+    BookingDetailResponse getBookingByCode(String bookingCode);
 
-    void cancelBooking(Long bookingID) ;
+    List<BookingSummaryResponse> getBookingsByCustomerEmail(String email);
+
+    void cancelBookingByCustomer(Long bookingId, String reason);
 }

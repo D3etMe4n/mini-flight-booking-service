@@ -1,5 +1,6 @@
 package com.cnpm.flightbooking.payment.internal;
 
+import com.cnpm.flightbooking.payment.CustomerType;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
