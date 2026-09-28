@@ -1,9 +1,8 @@
 package com.cnpm.flightbooking.payment.internal.strategy;
 
-import com.cnpm.flightbooking.payment.internal.CustomerType;
+import com.cnpm.flightbooking.payment.CustomerType;
 import com.cnpm.flightbooking.payment.internal.PaymentStrategy;
 import org.springframework.stereotype.Component;
-import tools.jackson.databind.deser.jdk.NumberDeserializers;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

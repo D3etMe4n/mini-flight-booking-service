@@ -1,5 +1,7 @@
 package com.cnpm.flightbooking.payment.internal;
 
+import com.cnpm.flightbooking.payment.CustomerType;
+import com.cnpm.flightbooking.payment.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.*;
 

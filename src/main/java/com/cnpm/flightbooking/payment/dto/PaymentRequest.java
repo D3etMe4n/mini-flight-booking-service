@@ -1,7 +1,7 @@
 package com.cnpm.flightbooking.payment.dto;
 
-import com.cnpm.flightbooking.payment.internal.CustomerType;
-import com.cnpm.flightbooking.payment.internal.PaymentMethod;
+import com.cnpm.flightbooking.payment.CustomerType;
+import com.cnpm.flightbooking.payment.PaymentMethod;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
