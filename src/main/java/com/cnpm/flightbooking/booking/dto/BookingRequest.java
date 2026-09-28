@@ -11,14 +11,14 @@ public record BookingRequest(
         Long flightId,
 
         @NotBlank(message = "Seat number must not be blank")
-        @Pattern(regexp = "^[0-9]{1,2}[A-F]$", message = "Invalid seat format (e.g., 12A, 1B)")
+        @Pattern(regexp = "^[1-9][0-9]?[A-F]$", message = "Invalid seat format (e.g., 1A, 12A, max 99F)")
         String seatNumber,
 
         @NotBlank(message = "Customer name must not be blank")
         String customerName,
 
         @NotBlank(message = "Customer email must not be blank")
-        @Email(message = "Invalid email format")
+        @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Invalid email format")
         String customerEmail,
 
         @NotBlank(message = "Customer phone must not be blank")
