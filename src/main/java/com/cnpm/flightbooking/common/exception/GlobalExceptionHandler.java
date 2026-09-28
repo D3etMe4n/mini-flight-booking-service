@@ -31,16 +31,16 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
     }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
-        Map<String, Object> responseBody = new HashMap<>();
-        responseBody.put("timestamp", LocalDateTime.now().toString());
-        responseBody.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value()); // 500
-        responseBody.put("error", "Internal Server Error");
-        responseBody.put("message", "Internal error, retry later");
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
-    }
+//
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
+//        Map<String, Object> responseBody = new HashMap<>();
+//        responseBody.put("timestamp", LocalDateTime.now().toString());
+//        responseBody.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value()); // 500
+//        responseBody.put("error", "Internal Server Error");
+//        responseBody.put("message", "Internal error, retry later");
+//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseBody);
+//    }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex) {
