@@ -29,23 +29,13 @@ import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/**
- * Robust End-to-End Integration Test for Booking Subsystem.
- *
- * Flaws Resolved:
- * 1. Singleton Container Pattern: Containers are started manually in a static block
- *    (preventing premature container shutdown by JUnit while @Async threads are still active).
- * 2. Async Synchronization: Uses Awaitility to await asynchronous notification event completions.
- * 3. Safe Database Teardown: Replaces destructive TRUNCATE with sequenced DELETE to prevent table lock conflicts.
- */
+// Robust End-to-End Integration Test for Booking Subsystem.
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @SuppressWarnings({"resource", "deprecation", "SqlResolve", "SqlNoDataSourceInspection"})
 class BookingIntegrationTest {
 
-    // =========================================================================
-    // FLAW 1 RESOLUTION: Singleton Containers (Survives across all test phases)
-    // =========================================================================
     static PostgreSQLContainer postgres;
     static GenericContainer<?> redis;
 
@@ -92,9 +82,6 @@ class BookingIntegrationTest {
 
     @BeforeEach
     void setupDatabaseFixtures() {
-        // =========================================================================
-        // FLAW 3 RESOLUTION: Safe sequenced DELETE avoids AccessExclusiveLock
-        // =========================================================================
         jdbcTemplate.execute("DELETE FROM notification_logs");
         jdbcTemplate.execute("DELETE FROM payment_transactions");
         jdbcTemplate.execute("DELETE FROM bookings");
@@ -150,9 +137,6 @@ class BookingIntegrationTest {
         assertThat(bookings.getFirst().getCustomerEmail()).isEqualTo("johndoe@example.com");
         assertThat(bookings.getFirst().getStatus()).isEqualTo(BookingStatus.CONFIRMED);
 
-        // =========================================================================
-        // FLAW 2 RESOLUTION: Await asynchronous event listener execution
-        // =========================================================================
         await().atMost(5, SECONDS)
                 .pollInterval(Duration.ofMillis(200))
                 .untilAsserted(() -> {
