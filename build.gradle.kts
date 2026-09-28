@@ -42,6 +42,7 @@ dependencies {
                 testImplementation("org.springframework.modulith:spring-modulith-starter-test")
                 testImplementation("org.testcontainers:testcontainers-junit-jupiter")
                 testImplementation("org.testcontainers:testcontainers-postgresql")
+                testImplementation("org.awaitility:awaitility:4.2.2")
                 testCompileOnly("org.projectlombok:lombok")
                 testRuntimeOnly("org.junit.platform:junit-platform-launcher")
                 testAnnotationProcessor("org.projectlombok:lombok")
