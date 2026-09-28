@@ -64,6 +64,29 @@ CREATE TABLE IF NOT EXISTS notification_logs (
     sent_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
 
+DROP TABLE IF EXISTS event_publication;
+
+DROP TABLE IF EXISTS event_publication CASCADE;
+
+CREATE TABLE event_publication (
+                                   id UUID NOT NULL,
+                                   listener_id VARCHAR(512) NOT NULL,
+                                   event_type VARCHAR(512) NOT NULL,
+                                   serialized_event TEXT NOT NULL,
+                                   publication_date TIMESTAMP WITH TIME ZONE NOT NULL,
+                                   completion_date TIMESTAMP WITH TIME ZONE,
+                                   completion_attempts INT NOT NULL DEFAULT 0,
+                                   last_resubmission_date TIMESTAMP WITH TIME ZONE,
+                                   status VARCHAR(32),
+                                   error_message TEXT,
+                                   PRIMARY KEY (id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_event_publication_completion_date
+    ON event_publication (completion_date);
+
+CREATE INDEX IF NOT EXISTS idx_event_publication_status
+    ON event_publication (status);
 
 INSERT INTO flights (id, flight_number, departure_airport, arrival_airport, departure_time, arrival_time, base_price, total_seats, available_seats, version)
 VALUES
