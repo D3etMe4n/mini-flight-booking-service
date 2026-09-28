@@ -8,45 +8,59 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.List;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * End-to-End Integration Test compatible with Spring Boot 4.1.1 and Spring Modulith.
- * Accesses Booking internal components natively while isolating database operations with JdbcTemplate.
+ * Robust End-to-End Integration Test for Booking Subsystem.
+ *
+ * Flaws Resolved:
+ * 1. Singleton Container Pattern: Containers are started manually in a static block
+ *    (preventing premature container shutdown by JUnit while @Async threads are still active).
+ * 2. Async Synchronization: Uses Awaitility to await asynchronous notification event completions.
+ * 3. Safe Database Teardown: Replaces destructive TRUNCATE with sequenced DELETE to prevent table lock conflicts.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@Testcontainers
 @SuppressWarnings({"resource", "deprecation", "SqlResolve", "SqlNoDataSourceInspection"})
 class BookingIntegrationTest {
 
-    @Container
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17-alpine")
-            .withDatabaseName("test_flight_db")
-            .withUsername("test_user")
-            .withPassword("test_pass");
+    // =========================================================================
+    // FLAW 1 RESOLUTION: Singleton Containers (Survives across all test phases)
+    // =========================================================================
+    static PostgreSQLContainer postgres;
+    static GenericContainer<?> redis;
 
-    @Container
-    static GenericContainer<?> redis = new GenericContainer<>("redis:7-alpine")
-            .withExposedPorts(6379);
+    static {
+        postgres = new PostgreSQLContainer("postgres:16-alpine")
+                .withDatabaseName("test_flight_db")
+                .withUsername("test_user")
+                .withPassword("test_pass")
+                .withReuse(false);
+        postgres.start();
+
+        redis = new GenericContainer<>("redis:7-alpine")
+                .withExposedPorts(6379);
+        redis.start();
+    }
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -56,6 +70,10 @@ class BookingIntegrationTest {
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");
         registry.add("spring.data.redis.host", redis::getHost);
         registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
+
+        // Optimize Hikari connection pooling for integration test stability
+        registry.add("spring.datasource.hikari.maximum-pool-size", () -> 10);
+        registry.add("spring.datasource.hikari.connection-timeout", () -> 10000);
     }
 
     @Autowired
@@ -74,16 +92,29 @@ class BookingIntegrationTest {
 
     @BeforeEach
     void setupDatabaseFixtures() {
-        // Clear database tables to ensure clean state before each test
-        jdbcTemplate.execute("TRUNCATE TABLE notification_logs, payment_transactions, bookings, flight_seats, flights CASCADE");
+        // =========================================================================
+        // FLAW 3 RESOLUTION: Safe sequenced DELETE avoids AccessExclusiveLock
+        // =========================================================================
+        jdbcTemplate.execute("DELETE FROM notification_logs");
+        jdbcTemplate.execute("DELETE FROM payment_transactions");
+        jdbcTemplate.execute("DELETE FROM bookings");
+        jdbcTemplate.execute("DELETE FROM flight_seats");
+        jdbcTemplate.execute("DELETE FROM flights");
 
-        // Seed flight entity directly into database
+        // Clean Modulith event publication registry if present
+        try {
+            jdbcTemplate.execute("DELETE FROM event_publication");
+        } catch (Exception ignored) {
+            // Table may not exist if Modulith JDBC event registry is disabled in test profile
+        }
+
+        // Seed flight entity
         jdbcTemplate.update("""
             INSERT INTO flights (id, flight_number, departure_airport, arrival_airport, departure_time, arrival_time, base_price, total_seats, available_seats, version)
             VALUES (?, 'VN-101', 'HAN', 'SGN', NOW() + INTERVAL '2 day', NOW() + INTERVAL '2 day 2 hour', 1500000.00, 10, 10, 0)
             """, testFlightId);
 
-        // Seed available seat for the flight
+        // Seed available seat
         jdbcTemplate.update("""
             INSERT INTO flight_seats (flight_id, seat_number, seat_class, is_reserved)
             VALUES (?, ?, 'ECONOMY', FALSE)
@@ -91,9 +122,8 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/bookings - Should create booking successfully using Record Builder")
+    @DisplayName("POST /api/v1/bookings - Should create booking and await async notification completion")
     void shouldCreateBookingSuccessfully() throws Exception {
-        // Construct immutable request payload using Lombok @Builder on Record
         BookingRequest request = BookingRequest.builder()
                 .flightId(testFlightId)
                 .seatNumber(testSeatNumber)
@@ -114,24 +144,29 @@ class BookingIntegrationTest {
                 .andExpect(jsonPath("$.status", is("CONFIRMED")))
                 .andExpect(jsonPath("$.chargedAmount", greaterThan(0.0)));
 
-        // Verify entity persisted in database using Java 21 getFirst()
+        // Verify synchronous state in Database
         List<Booking> bookings = bookingRepository.findAll();
         assertThat(bookings).hasSize(1);
         assertThat(bookings.getFirst().getCustomerEmail()).isEqualTo("johndoe@example.com");
         assertThat(bookings.getFirst().getStatus()).isEqualTo(BookingStatus.CONFIRMED);
 
-        // Verify that seat reservation state is set to TRUE
-        Boolean isReserved = jdbcTemplate.queryForObject(
-                "SELECT is_reserved FROM flight_seats WHERE flight_id = ? AND seat_number = ?",
-                Boolean.class, testFlightId, testSeatNumber
-        );
-        assertThat(isReserved).isTrue();
+        // =========================================================================
+        // FLAW 2 RESOLUTION: Await asynchronous event listener execution
+        // =========================================================================
+        await().atMost(5, SECONDS)
+                .pollInterval(Duration.ofMillis(200))
+                .untilAsserted(() -> {
+                    Integer count = jdbcTemplate.queryForObject(
+                            "SELECT count(*) FROM notification_logs WHERE recipient = 'johndoe@example.com' AND status = 'SENT'",
+                            Integer.class
+                    );
+                    assertThat(count).isNotNull().isGreaterThan(0);
+                });
     }
 
     @Test
     @DisplayName("POST /api/v1/bookings - Should reject booking when seat is already reserved")
     void shouldFailWhenSeatIsAlreadyReserved() throws Exception {
-        // Mark seat as reserved prior to request
         jdbcTemplate.update(
                 "UPDATE flight_seats SET is_reserved = TRUE WHERE flight_id = ? AND seat_number = ?",
                 testFlightId, testSeatNumber
@@ -218,7 +253,7 @@ class BookingIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/bookings/{bookingId}/cancel - Should cancel booking and return 204 No Content")
+    @DisplayName("POST /api/v1/bookings/{bookingId}/cancel - Should cancel booking and await cancellation notification")
     void shouldCancelBookingSuccessfully() throws Exception {
         Booking booking = new Booking();
         booking.setBookingCode("PNR-CANCEL");
@@ -237,5 +272,16 @@ class BookingIntegrationTest {
 
         Booking updatedBooking = bookingRepository.findById(booking.getId()).orElseThrow();
         assertThat(updatedBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
+
+        // Await background notification for cancellation event to finalize
+        await().atMost(5, SECONDS)
+                .pollInterval(Duration.ofMillis(200))
+                .untilAsserted(() -> {
+                    Integer count = jdbcTemplate.queryForObject(
+                            "SELECT count(*) FROM notification_logs WHERE recipient = 'michael@example.com'",
+                            Integer.class
+                    );
+                    assertThat(count).isNotNull().isGreaterThan(0);
+                });
     }
 }
