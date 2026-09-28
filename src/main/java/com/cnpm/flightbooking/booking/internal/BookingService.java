@@ -114,7 +114,7 @@ public class BookingService {
     }
 
     public void cancelBookingBySystem(Long bookingId, String reason) {
-        if (bookingId == null || bookingId<= 0) {
+        if (bookingId == null || bookingId <= 0) {
             throw new IllegalArgumentException("Booking ID must be greater than zero");
         }
 
@@ -123,10 +123,6 @@ public class BookingService {
 
         if (booking.getStatus() == BookingStatus.CANCELLED) {
             throw new InvalidBookingStateException("Booking is already cancelled");
-        }
-
-        if (booking.getStatus() != BookingStatus.CONFIRMED) {
-            throw new InvalidBookingStateException("Only CONFIRMED bookings can be cancelled");
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
