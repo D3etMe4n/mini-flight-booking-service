@@ -12,7 +12,7 @@ import java.util.UUID;
 @Service
 @AllArgsConstructor
 @Transactional
-class BookingFacadeImpl {
+class BookingService {
 
     private final BookingRepository bookingRepository;
 
